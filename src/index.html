@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Utility - Convert & Pretty Print</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .control-group input,
+        .control-group select {
+            padding: 5px 8px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .main-container {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            min-height: 0;
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background-color: #34495e;
+            color: white;
+            padding: 12px 16px;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .panel-content {
+            flex: 1;
+            position: relative;
+        }
+
+        textarea {
+            width: 100%;
+            height: 100%;
+            border: none;
+            outline: none;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            resize: none;
+            background-color: #fafafa;
+        }
+
+        #input-json {
+            background-color: white;
+        }
+
+        #output-text {
+            background-color: #f8f9fa;
+            color: #2c3e50;
+        }
+
+        .error {
+            background-color: #fff5f5;
+            color: #e74c3c;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .success {
+            background-color: #f0fff4;
+            color: #27ae60;
+            border-left: 4px solid #27ae60;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+                padding: 10px;
+            }
+            
+            .controls {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>JSON Utility</h1>
+        <div class="controls">
+            <div class="control-group">
+                <label for="indent-level">Indent:</label>
+                <input type="number" id="indent-level" min="0" max="8" value="2">
+            </div>
+            <div class="control-group">
+                <label for="output-format">Format:</label>
+                <select id="output-format">
+                    <option value="json">JSON</option>
+                    <option value="yaml">YAML</option>
+                    <option value="toml">TOML</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="panel">
+            <div class="panel-header">Input JSON</div>
+            <div class="panel-content">
+                <textarea id="input-json" placeholder="Paste your JSON here..."></textarea>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">Output</div>
+            <div class="panel-content">
+                <textarea id="output-text" readonly placeholder="Converted output will appear here..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script>
+        const inputJson = document.getElementById('input-json');
+        const outputText = document.getElementById('output-text');
+        const indentLevel = document.getElementById('indent-level');
+        const outputFormat = document.getElementById('output-format');
+
+        function jsonToToml(obj, indent = 0) {
+            const spaces = '  '.repeat(indent);
+            let result = '';
+            
+            for (const [key, value] of Object.entries(obj)) {
+                if (value === null) {
+                    result += `${spaces}${key} = null\n`;
+                } else if (typeof value === 'string') {
+                    result += `${spaces}${key} = "${value.replace(/"/g, '\\"')}"\n`;
+                } else if (typeof value === 'number' || typeof value === 'boolean') {
+                    result += `${spaces}${key} = ${value}\n`;
+                } else if (Array.isArray(value)) {
+                    if (value.every(item => typeof item === 'string' || typeof item === 'number' || typeof item === 'boolean')) {
+                        const arrayStr = value.map(item => 
+                            typeof item === 'string' ? `"${item.replace(/"/g, '\\"')}"` : item
+                        ).join(', ');
+                        result += `${spaces}${key} = [${arrayStr}]\n`;
+                    } else {
+                        result += `${spaces}[[${key}]]\n`;
+                        value.forEach(item => {
+                            if (typeof item === 'object' && item !== null) {
+                                result += jsonToToml(item, indent + 1);
+                            }
+                        });
+                    }
+                } else if (typeof value === 'object') {
+                    result += `${spaces}[${key}]\n`;
+                    result += jsonToToml(value, indent + 1);
+                }
+            }
+            return result;
+        }
+
+        function convertJson() {
+            const input = inputJson.value.trim();
+            
+            if (!input) {
+                outputText.value = '';
+                outputText.className = '';
+                return;
+            }
+
+            try {
+                const jsonData = JSON.parse(input);
+                const indent = parseInt(indentLevel.value) || 2;
+                const format = outputFormat.value;
+
+                let output = '';
+                
+                switch (format) {
+                    case 'json':
+                        output = JSON.stringify(jsonData, null, indent);
+                        break;
+                    case 'yaml':
+                        output = jsyaml.dump(jsonData, { indent: indent });
+                        break;
+                    case 'toml':
+                        output = jsonToToml(jsonData);
+                        break;
+                }
+
+                outputText.value = output;
+                outputText.className = 'success';
+                
+            } catch (error) {
+                outputText.value = `Error: ${error.message}`;
+                outputText.className = 'error';
+            }
+        }
+
+        inputJson.addEventListener('input', convertJson);
+        indentLevel.addEventListener('change', convertJson);
+        outputFormat.addEventListener('change', convertJson);
+
+        inputJson.value = `{"name": "John Doe", "age": 30, "city": "New York", "hobbies": ["reading", "coding", "traveling"], "address": {"street": "123 Main St", "zip": "10001"}}`;
+        
+        convertJson();
+    </script>
+</body>
+</html>

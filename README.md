@@ -2,6 +2,11 @@
 
 A simple, browser-based tool for converting and pretty-printing JSON data to multiple formats.
 
+This is a read-only mirror of `public/jsonutil` in the source monorepo.
+Changes are published from there; Cloudflare Workers automatically deploys
+`master` to [jsonutil.bedecarroll.com](https://jsonutil.bedecarroll.com).
+The deployment serves only `src/`; no build step is required.
+
 ## Features
 
 - **Pretty Print JSON** with customizable indentation (0-8 spaces)
@@ -14,7 +19,7 @@ A simple, browser-based tool for converting and pretty-printing JSON data to mul
 
 ## Usage
 
-1. Open `index.html` in your web browser
+1. Open `src/index.html` in your web browser
 2. Paste or type JSON data in the left panel
 3. Adjust indent level (0-8 spaces) using the input field
 4. Select output format from dropdown: JSON, YAML, or TOML

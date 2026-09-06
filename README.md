@@ -3,7 +3,8 @@
 A simple, browser-based tool for converting and pretty-printing JSON data to multiple formats.
 
 This is a read-only mirror of `public/jsonutil` in the source monorepo.
-Changes are published from there by the dedicated GitHub App publisher;
+Changes merged into the monorepo’s protected `master` are automatically published
+by the dedicated GitHub App publisher;
 Cloudflare Workers automatically deploys
 `master` to [jsonutil.bedecarroll.com](https://jsonutil.bedecarroll.com).
 The deployment serves only `src/`; no build step is required.
